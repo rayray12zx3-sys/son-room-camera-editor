@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S01 鏡位調整器｜固定 3D 房間</title>
+<style>
+:root { color-scheme: dark; --bg:#10171e; --panel:#1b252e; --inner:#202c36; --border:#35424a; --txt:#f1f5f5; --dim:#a8b7bf; --hi:#edb56d; --hi2:#f8ce91; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+header { padding:18px clamp(16px,3.1vw,36px); display:flex;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:#172129; }
+header h1 { font-size:clamp(18px,2vw,23px); margin:0;font-weight:750;letter-spacing:-.4px; }
+header p {font-size:12px;margin:5px 0 0;color:var(--dim)}
+.pill {display:inline-flex;align-items:center;gap:6px;border:1px solid #56614e;background:#253429;color:#a9d4a7;font-size:11px;border-radius:999px;padding:5px 10px;white-space:nowrap}
+main {max-width:1410px; margin:0 auto; padding:clamp(12px,2vw,24px); display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,380px);align-items:start;gap:18px;}
+.card {background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;}
+.sectionHead {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.sectionHead strong {font-size:15px}.muted{font-size:12px;color:var(--dim)}
+.visuals{display:grid;grid-template-columns:minmax(160px,540px) minmax(190px,1fr);gap:15px;align-items:start}
+.previewSlot{display:flex;align-items:center;justify-content:center;flex-direction:column;min-width:0}
+#view {width:100%;max-width:430px;aspect-ratio:9 / 16;display:block;border-radius:7px;border:1px solid #374149;touch-action:none;cursor:grab;background:#151b20;}
+#view:active{cursor:grabbing}
+#plan {width:100%;max-width:340px;aspect-ratio:340 / 435;display:block;border-radius:8px;border:1px solid #33414b;background:#17242c;touch-action:none;cursor:crosshair;}
+.legend {color:var(--dim);font-size:11px;line-height:1.5;margin-top:9px}
+.tip {font-size:12px;color:var(--hi2);margin:2px 0 12px;background:rgba(237,181,109,.08);border:1px solid #6b583e;padding:10px;border-radius:8px;line-height:1.65}
+.controls {display:grid;gap:15px}
+.control label {display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;margin-bottom:8px}
+.control label .val{font-variant-numeric:tabular-nums;color:var(--hi2);font-size:12px}
+input[type=range] {display:block;width:100%;accent-color:var(--hi);cursor:pointer;}
+.groupLabel {font-size:11px;font-weight:800;color:#9ab0bc;text-transform:uppercase;letter-spacing:1.1px;padding-top:2px;border-bottom:1px solid #32414b;padding-bottom:6px;}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+button{font-family:inherit;font-size:12px;font-weight:650;cursor:pointer;border-radius:8px;padding:11px 7px;color:#ebf3f6;background:#2a3944;border:1px solid #476071;}
+button.primary {background:var(--hi);border-color:var(--hi);color:#26231e;}
+button:hover{filter:brightness(1.14)}
+button:focus-visible{outline:2px solid var(--hi)}
+.smallwarn {border-left:3px solid var(--hi);font-size:12px;line-height:1.6;color:#c3cbd0;padding-left:10px;margin-top:15px;}
+footer {padding:0 22px 20px;color:#97a7b1;font-size:12px;line-height:1.65;max-width:1410px;margin:auto}
+#msg{font-size:11px;color:#a7c8b6;min-height:18px;margin-top:9px}
+@media(max-width:970px){main {grid-template-columns:1fr;} .controls {grid-template-columns:1fr 1fr;gap:14px}.groupLabel{grid-column:1/-1} .btnrow{grid-column:1/-1}}
+@media(max-width:610px){.visuals{grid-template-columns: minmax(0,1fr) minmax(0,1fr);gap:9px}.card{padding:11px}.controls {grid-template-columns:1fr} .groupLabel{grid-column:auto}#plan {max-width:none}header{align-items:flex-start} .pill{font-size:10px}}
+</style>
+</head>
+<body>
+<header><div><h1>S01 走廊攝影機調整器</h1><p>固定房間幾何 · 9:16 真正的 3D 攝影機畫面 · 不消耗 AI 額度 · 自動儲存鏡位</p></div><span class="pill">● 瀏覽器本機處理</span></header>
+<main>
+<section class="card">
+  <div class="sectionHead"><strong>即時攝影機預覽</strong><span class="muted">門板和家具不會移動</span></div>
+  <div class="visuals">
+    <div class="previewSlot"><canvas id="view" width="540" height="960" aria-label="9:16 三維走廊攝影機實際畫面"></canvas><div class="legend">在畫面上拖曳：左右轉頭、上下俯仰。滑鼠滾輪：變焦。</div></div>
+    <div class="previewSlot"><canvas id="plan" width="340" height="435" aria-label="俯視場景及攝影機位置，橘色點可拖動"></canvas><div class="legend">俯視圖的橘色圓點可拖曳攝影機位置（限制在走廊）。</div></div>
+  </div>
+  <div class="smallwarn">你已接受的是 S01 攝影機位置，不是正式人物分鏡。場景比例、門鉸鏈和角度仍是試作設定。本網站不把鏡位送往任何伺服器；只在此瀏覽器儲存。網站本身若公開部署，3D 灰模亦可被他人檢視。</div>
+</section>
+<aside class="card">
+  <div class="sectionHead"><strong>攝影機控制</strong><span class="muted">只有鏡頭數值可編輯</span></div>
+  <div class="tip">會自動記住本裝置最後的鏡位；先在俯視圖拖動橘點，再拖曳 3D 畫面調整取景。跨裝置備份時可匯出 JSON。</div>
+  <div class="controls" id="controls">
+    <div class="groupLabel">位置 / Position</div>
+    <div class="control"><label for="x">左右移動 X <span class="val" id="vx"></span></label><input id="x" type="range" min="-2.5" max="2.4" step="0.01"></div>
+    <div class="control"><label for="y">走廊前後 Y <span class="val" id="vy"></span></label><input id="y" type="range" min="-2.9" max="-0.20" step="0.01"></div>
+    <div class="control"><label for="z">攝影機高度 Z <span class="val" id="vz"></span></label><input id="z" type="range" min="1.00" max="2.05" step="0.01"></div>
+    <div class="groupLabel">角度 / Orientation</div>
+    <div class="control"><label for="yaw">水平轉向 <span class="val" id="vyaw"></span></label><input id="yaw" type="range" min="-78" max="78" step="0.5"></div>
+    <div class="control"><label for="pitch">上仰 / 下俯 <span class="val" id="vpitch"></span></label><input id="pitch" type="range" min="-35" max="30" step="0.5"></div>
+    <div class="control"><label for="fov">垂直視角 FOV <span class="val" id="vfov"></span></label><input id="fov" type="range" min="40" max="102" step="1"></div>
+  </div>
+  <div class="btnrow"><button id="reset">恢復已接受 S01 鏡位</button><button id="copy">複製攝影機參數</button><button class="primary" id="snap">匯出 PNG 截圖</button><button class="primary" id="save">匯出 JSON 參數</button><button id="load" style="grid-column:1/-1">載入之前儲存的 JSON 鏡位</button><input type="file" id="importfile" accept=".json,application/json" style="display:none"></div>
+  <div id="msg" aria-live="polite"></div>
+</aside>
+</main>
+<footer>本裝置自動記憶並非雲端同步；清除網站資料、換瀏覽器或換電腦會遺失本機變更，需要匯出 JSON 備份。已接受的原始房間照片、空間母圖、房門連續性圖皆不更動。這個編輯器只會更改虛擬鏡頭座標與視角；匯出 JSON 後可回傳給 ChatGPT 進行相同參數的正式灰模重算。</footer>
+<script>
+'use strict';
+const OBJECTS = [{"name":"floor","p":[0,2.175,-0.07],"d":[4.85,5.449999999999999,0.13],"a":0,"c":[0.66,0.66,0.64]},{"name":"hall_floor","p":[0,-1.5,-0.07],"d":[4.85,3.0,0.13],"a":0,"c":[0.66,0.66,0.64]},{"name":"hall_ceiling","p":[0,-1.5,2.71],"d":[4.85,3.0,0.12],"a":0,"c":[0.8,0.81,0.8]},{"name":"room_ceiling","p":[0,2.175,2.71],"d":[4.85,4.55,0.12],"a":0,"c":[0.8,0.81,0.8]},{"name":"back_wall","p":[0,4.42,1.325],"d":[4.85,0.14,2.65],"a":0,"c":[0.8,0.81,0.8]},{"name":"left_wall","p":[-2.46,2.175,1.325],"d":[0.13,4.51,2.65],"a":0,"c":[0.74,0.77,0.78]},{"name":"right_wall","p":[2.46,2.175,1.325],"d":[0.13,4.51,2.65],"a":0,"c":[0.74,0.77,0.78]},{"name":"entrance_wall_left","p":[-2.03,0,1.325],"d":[0.74,0.16,2.65],"a":0,"c":[0.8,0.81,0.8]},{"name":"entrance_wall_right","p":[0.8699999999999999,0,1.325],"d":[3.06,0.16,2.65],"a":0,"c":[0.8,0.81,0.8]},{"name":"entrance_wall_header","p":[-1.16,0,2.395],"d":[0.9999999999999999,0.16,0.5099999999999998],"a":0,"c":[0.8,0.81,0.8]},{"name":"left_door_jamb","p":[-1.625,-0.02,1.07],"d":[0.07,0.19,2.14],"a":0,"c":[0.44,0.4,0.36]},{"name":"right_door_jamb","p":[-0.6950000000000001,-0.02,1.07],"d":[0.07,0.19,2.14],"a":0,"c":[0.44,0.4,0.36]},{"name":"door_header","p":[-1.16,-0.03,2.1750000000000003],"d":[0.9999999999999999,0.19,0.07],"a":0,"c":[0.44,0.4,0.36]},{"name":"FIXED_DOOR_LEAF","p":[-1.3421469391185372,0.44535868972222764,1.07],"d":[0.94,0.045,2.0700000000000003],"a":53.0,"c":[0.64,0.47,0.32]},{"name":"door_panel_1.46","p":[-1.3657066866649323,0.4631122329052131,1.46],"d":[0.6204,0.014,0.72],"a":53.0,"c":[0.44,0.32,0.24]},{"name":"door_panel_0.57","p":[-1.3657066866649323,0.4631122329052131,0.57],"d":[0.6204,0.014,0.73],"a":53.0,"c":[0.44,0.32,0.24]},{"name":"window_glass","p":[-1.47,4.244999999999999,1.78],"d":[1.67,0.035,1.17],"a":0,"c":[0.37,0.53,0.62]},{"name":"window_cross_horizontal","p":[-1.47,4.21,1.76],"d":[1.75,0.048,0.055],"a":0,"c":[0.44,0.4,0.36]},{"name":"window_cross_vertical","p":[-1.47,4.199999999999999,1.78],"d":[0.047,0.06,1.22],"a":0,"c":[0.44,0.4,0.36]},{"name":"window_side_trim","p":[-2.35,4.21,1.78],"d":[0.07,0.07,1.26],"a":0,"c":[0.44,0.4,0.36]},{"name":"window_side_trim","p":[-0.6,4.21,1.78],"d":[0.07,0.07,1.26],"a":0,"c":[0.44,0.4,0.36]},{"name":"desk_top","p":[-1.39,3.54,0.77],"d":[1.62,0.76,0.09],"a":0,"c":[0.68,0.56,0.45]},{"name":"desk_leg","p":[-2.1,3.26,0.375],"d":[0.095,0.095,0.75],"a":0,"c":[0.48,0.4,0.34]},{"name":"desk_leg","p":[-2.1,3.82,0.375],"d":[0.095,0.095,0.75],"a":0,"c":[0.48,0.4,0.34]},{"name":"desk_leg","p":[-0.69,3.26,0.375],"d":[0.095,0.095,0.75],"a":0,"c":[0.48,0.4,0.34]},{"name":"desk_leg","p":[-0.69,3.82,0.375],"d":[0.095,0.095,0.75],"a":0,"c":[0.48,0.4,0.34]},{"name":"desktop_book","p":[-1.5,3.45,0.84],"d":[0.45,0.3,0.035],"a":0,"c":[0.91,0.9,0.85]},{"name":"desk_lamp_stem","p":[-2.02,3.74,1.12],"d":[0.055,0.05,0.65],"a":0,"c":[0.82,0.73,0.55]},{"name":"desk_lamp_head","p":[-2.0,3.67,1.48],"d":[0.33,0.17,0.09],"a":0,"c":[0.82,0.73,0.55]},{"name":"chair_seat","p":[-1.35,2.64,0.47],"d":[0.53,0.49,0.09],"a":0,"c":[0.47,0.54,0.59]},{"name":"chair_back","p":[-1.35,2.38,0.82],"d":[0.58,0.08,0.7],"a":0,"c":[0.47,0.54,0.59]},{"name":"chair_leg","p":[-1.58,2.44,0.24],"d":[0.055,0.055,0.46],"a":0,"c":[0.47,0.54,0.59]},{"name":"chair_leg","p":[-1.58,2.85,0.24],"d":[0.055,0.055,0.46],"a":0,"c":[0.47,0.54,0.59]},{"name":"chair_leg","p":[-1.12,2.44,0.24],"d":[0.055,0.055,0.46],"a":0,"c":[0.47,0.54,0.59]},{"name":"chair_leg","p":[-1.12,2.85,0.24],"d":[0.055,0.055,0.46],"a":0,"c":[0.47,0.54,0.59]},{"name":"bed_frame","p":[1.32,2.73,0.35],"d":[1.83,2.44,0.38],"a":0,"c":[0.5,0.48,0.48]},{"name":"bed_mattress","p":[1.32,2.73,0.59],"d":[1.74,2.3,0.21],"a":0,"c":[0.83,0.85,0.83]},{"name":"bed_pillow_left","p":[0.9,3.55,0.75],"d":[0.7,0.43,0.1],"a":0,"c":[0.91,0.9,0.85]},{"name":"bed_pillow_right","p":[1.69,3.55,0.75],"d":[0.7,0.43,0.1],"a":0,"c":[0.91,0.9,0.85]},{"name":"bed_headboard","p":[1.31,4.05,0.9],"d":[1.85,0.13,0.96],"a":0,"c":[0.5,0.48,0.48]},{"name":"bookshelf_side","p":[-0.07,3.93,0.77],"d":[0.45,0.49,1.5],"a":0,"c":[0.47,0.51,0.54]},{"name":"shelf_board","p":[-0.07,3.66,0.35],"d":[0.49,0.05,0.045],"a":0,"c":[0.66,0.59,0.53]},{"name":"shelf_board","p":[-0.07,3.66,0.69],"d":[0.49,0.05,0.045],"a":0,"c":[0.66,0.59,0.53]},{"name":"shelf_board","p":[-0.07,3.66,1.05],"d":[0.49,0.05,0.045],"a":0,"c":[0.66,0.59,0.53]},{"name":"shelf_board","p":[-0.07,3.66,1.37],"d":[0.49,0.05,0.045],"a":0,"c":[0.66,0.59,0.53]},{"name":"ceiling_lamp","p":[0.1,2.67,2.5],"d":[0.53,0.44,0.13],"a":0,"c":[0.82,0.73,0.55]}];
+const fixedDoor = {openingLeft:-1.66, openingRight:-.66,hinge:[-1.625,.07],angleDeg:53,width:.94};
+// Approved S01 camera-only baseline from the exact operator-exported JSON.
+const START = { x:-0.77,y:-0.55,z:1.46,yaw:-1.66942138671875,pitch:-12.231405639648438,fov:64 };
+const state={...START};
+// Browser-local camera storage; never transmitted to GitHub or another server.
+const STORAGE_KEY='son-room-s01-camera-site-r1';
+try {
+  const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+  if(saved && ['x','y','z','yaw','pitch','fov'].every(k=>Number.isFinite(saved[k]))) {
+    state.x=Math.max(-2.5,Math.min(2.4,saved.x));
+    state.y=Math.max(-2.9,Math.min(-.2,saved.y));
+    state.z=Math.max(1,Math.min(2.05,saved.z));
+    state.yaw=Math.max(-78,Math.min(78,saved.yaw));
+    state.pitch=Math.max(-35,Math.min(30,saved.pitch));
+    state.fov=Math.max(40,Math.min(102,saved.fov));
+  }
+} catch (e) { /* private browsing / disabled storage: editor still works */ }
+const $=id=>document.getElementById(id), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pcanvas=$('plan'),view=$('view');let gl=view.getContext('webgl',{alpha:false,antialias:true,preserveDrawingBuffer:true});
+function direction(){let a=state.yaw*Math.PI/180,b=state.pitch*Math.PI/180;return [Math.sin(a)*Math.cos(b),Math.cos(a)*Math.cos(b),Math.sin(b)];}
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]], normalize=a=>{let m=Math.hypot(...a)||1;return a.map(v=>v/m);};
+function lookAt(pos,dir){let f=normalize(dir),r=normalize(cross(f,[0,0,1])),u=cross(r,f); return new Float32Array([r[0],u[0],-f[0],0,r[1],u[1],-f[1],0,r[2],u[2],-f[2],0,-dot(r,pos),-dot(u,pos),dot(f,pos),1]);}
+function perspective(vfov,aspect,near,far){let f=1/Math.tan(vfov*Math.PI/360);return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)/(near-far),-1,0,0,2*far*near/(near-far),0]);}
+function compile(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){throw Error(gl.getShaderInfoLog(s));}return s;}
+let program,vbo,nV=0,uProj,uView;
+if(gl){try{
+ const vertex=`attribute vec3 aPos;attribute vec3 aColor;attribute vec3 aNorm;uniform mat4 uProj;uniform mat4 uView;varying vec3 vColor;varying vec3 vNorm;void main(){vColor=aColor;vNorm=aNorm;gl_Position=uProj*uView*vec4(aPos,1.0);}`;
+ const fragment=`precision mediump float;varying vec3 vColor;varying vec3 vNorm;void main(){vec3 sun=normalize(vec3(-0.45,-0.35,0.80));float lambert=max(dot(normalize(vNorm),sun),0.0);float lit=0.67+0.33*lambert;gl_FragColor=vec4(vColor*lit,1.0);}`;
+ program=gl.createProgram();gl.attachShader(program,compile(gl.VERTEX_SHADER,vertex));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
+ gl.useProgram(program);uProj=gl.getUniformLocation(program,'uProj');uView=gl.getUniformLocation(program,'uView');
+ const floats=[];
+ function emit(v,n,c){floats.push(v[0],v[1],v[2],c[0],c[1],c[2],n[0],n[1],n[2]); nV++;}
+ // Right handed Z-up cubes with face normals and fixed model yaws.
+ const FACES=[[[1,0,0],[1,2,6,5]], [[-1,0,0],[0,4,7,3]],[[0,1,0],[2,3,7,6]],[[0,-1,0],[0,1,5,4]], [[0,0,1],[4,5,6,7]], [[0,0,-1],[0,3,2,1]]];
+ for(const o of OBJECTS){const [dx,dy,dz]=o.d.map(v=>v/2);const verts=[[-dx,-dy,-dz],[dx,-dy,-dz],[dx,dy,-dz],[-dx,dy,-dz],[-dx,-dy,dz],[dx,-dy,dz],[dx,dy,dz],[-dx,dy,dz]];
+ const a=o.a*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a);
+ function transformed(v){return [o.p[0]+ca*v[0]-sa*v[1],o.p[1]+sa*v[0]+ca*v[1],o.p[2]+v[2]];}
+ const world=verts.map(transformed);
+ for(const [n,idx] of FACES){const norm=[ca*n[0]-sa*n[1],sa*n[0]+ca*n[1],n[2]];for(const j of [0,1,2,0,2,3])emit(world[idx[j]],norm,o.c);}
+ }
+ const data=new Float32Array(floats);vbo=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+ const stride=9*4;for(const [nm,size,ofs] of [['aPos',3,0],['aColor',3,3*4],['aNorm',3,6*4]]){const loc=gl.getAttribLocation(program,nm);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,size,gl.FLOAT,false,stride,ofs);}
+ gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);
+} catch(err){gl=null; $('msg').textContent='WebGL 初始化失敗：'+String(err.message||err);}}
+// Deterministic canvas-based 3D perspective fallback for browsers that block WebGL.
+// This uses the same fixed 46 boxes and camera. No external libraries or AI service.
+const ctx2d=gl?null:view.getContext('2d');
+function clipNear(poly,minZ){const out=[]; for(let i=0;i<poly.length;i++){let a=poly[i],b=poly[(i+1)%poly.length];let ain=a[2]>=minZ,bin=b[2]>=minZ;if(ain)out.push(a);if(ain!==bin){let t=(minZ-a[2])/(b[2]-a[2]);out.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1]),minZ]);}}return out;}
+function renderCpu(){if(!ctx2d)return;ctx2d.clearRect(0,0,view.width,view.height);ctx2d.fillStyle='#171c21';ctx2d.fillRect(0,0,view.width,view.height);
+ const f=normalize(direction()),r=normalize(cross(f,[0,0,1])),u=cross(r,f),cam=[state.x,state.y,state.z];
+ const halfH=Math.tan(state.fov*Math.PI/360),aspect=view.width/view.height,faces=[];
+ const idxFaces=[[[1,2,6,5],[1,0,0] ],[[0,4,7,3],[-1,0,0] ],[[2,3,7,6],[0,1,0] ],[[0,1,5,4],[0,-1,0] ],[[4,5,6,7],[0,0,1] ],[[0,3,2,1],[0,0,-1] ]];
+ for(const o of OBJECTS){const [dx,dy,dz]=o.d.map(v=>v/2),vs=[[-dx,-dy,-dz],[dx,-dy,-dz],[dx,dy,-dz],[-dx,dy,-dz],[-dx,-dy,dz],[dx,-dy,dz],[dx,dy,dz],[-dx,dy,dz]];
+   const a=o.a*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a);
+   const transform=v=>[o.p[0]+ca*v[0]-sa*v[1],o.p[1]+sa*v[0]+ca*v[1],o.p[2]+v[2]];
+   const verts=vs.map(transform);
+   const toCamera=v=>{const rel=[v[0]-cam[0],v[1]-cam[1],v[2]-cam[2]];return [dot(rel,r),dot(rel,u),dot(rel,f)];};
+   for(const [idx,normal] of idxFaces){const n=[ca*normal[0]-sa*normal[1],sa*normal[0]+ca*normal[1],normal[2]];
+      // Ignore faces looking away from the camera (solid cuboids).
+      const center=idx.reduce((ac,i)=>[ac[0]+verts[i][0]/4,ac[1]+verts[i][1]/4,ac[2]+verts[i][2]/4],[0,0,0]);
+      const toEye=[cam[0]-center[0],cam[1]-center[1],cam[2]-center[2]];
+      if(dot(n,toEye)<-0.0001)continue;
+      const original=idx.map(i=>toCamera(verts[i])),poly=clipNear(original,.035);
+      if(poly.length<3)continue;
+      const depth=poly.reduce((sum,v)=>sum+v[2],0)/poly.length;
+      if(depth>50)continue;
+      const projected=poly.map(v=>[view.width*.5+(v[0]/(v[2]*halfH*aspect))*view.width*.5,view.height*.5-(v[1]/(v[2]*halfH))*view.height*.5]);
+      const light=normalize([-.45,-.35,.8]),lambert=Math.max(0,dot(n,light)),shade=.67+.33*lambert;
+      let color=o.c.map(v=>Math.round(255*clamp(v*shade,0,1)));
+      faces.push({proj:projected,depth,color});
+   }
+ }
+ faces.sort((a,b)=>b.depth-a.depth);
+ for(const obj of faces){const ps=obj.proj;ctx2d.beginPath();ctx2d.moveTo(ps[0][0],ps[0][1]);for(let i=1;i<ps.length;i++)ctx2d.lineTo(ps[i][0],ps[i][1]);ctx2d.closePath();ctx2d.fillStyle=`rgb(${obj.color.join(',')})`;ctx2d.fill();ctx2d.strokeStyle='rgba(24,28,32,.13)';ctx2d.lineWidth=.8;ctx2d.stroke();}
+}
+function render3d(){if(!gl){renderCpu();return;}gl.viewport(0,0,view.width,view.height);gl.clearColor(.075,.095,.112,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uProj,false,perspective(state.fov,view.width/view.height,.025,50));gl.uniformMatrix4fv(uView,false,lookAt([state.x,state.y,state.z],direction()));gl.drawArrays(gl.TRIANGLES,0,nV);}
+function renderPlan(){const ctx=pcanvas.getContext('2d'),W=pcanvas.width,H=pcanvas.height;ctx.clearRect(0,0,W,H);ctx.fillStyle='#17242c';ctx.fillRect(0,0,W,H);
+ const scale=43, cx=171, y0=323, map=(x,y)=>[cx+scale*x,y0-scale*y];
+ function path(x1,y1,x2,y2,width,color){const a=map(x1,y1),b=map(x2,y2);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineWidth=width;ctx.strokeStyle=color;ctx.lineCap='butt';ctx.stroke();}
+ function rect(cx,cy,dx,dy,c,txt){let [x,y]=map(cx-dx/2,cy+dy/2);ctx.fillStyle=c;ctx.fillRect(x,y,scale*dx,scale*dy);ctx.strokeStyle='#7d929c';ctx.lineWidth=1.3;ctx.strokeRect(x,y,scale*dx,scale*dy);if(txt){ctx.fillStyle='#e4eaed';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(txt,map(cx,cy)[0],map(cx,cy)[1]+4);}}
+ // furniture proxies and same true door swing in XY
+ rect(-1.39,3.54,1.62,.76,'#735b4e','書桌'); rect(-1.35,2.64,.54,.49,'#4c6876','椅子');rect(1.32,2.73,1.83,2.44,'#64736f','床');rect(-.07,3.93,.45,.49,'#465d65','書櫃');
+ path(-2.4,0,-1.66,0,8,'#b5bfc3');path(-.66,0,2.4,0,8,'#b5bfc3');path(-2.4,0,-2.4,4.35,8,'#b5bfc3');path(2.4,0,2.4,4.35,8,'#b5bfc3');path(-2.4,4.35,2.4,4.35,8,'#b5bfc3');path(-2.25,4.21,-.68,4.21,5,'#6fa2bb');
+ let a=fixedDoor.angleDeg*Math.PI/180,ex=fixedDoor.hinge[0]+Math.cos(a)*fixedDoor.width,ey=fixedDoor.hinge[1]+Math.sin(a)*fixedDoor.width;path(fixedDoor.hinge[0],fixedDoor.hinge[1],ex,ey,6,'#e3af73');
+ let h=map(...fixedDoor.hinge);ctx.beginPath();ctx.arc(h[0],h[1],4.5,0,2*Math.PI);ctx.fillStyle='#f1d3ad';ctx.fill();
+ let pos=map(state.x,state.y),dir=direction();
+ // camera view wedge (horizontal FOV derived from portrait vertical FOV)
+ const hfov=2*Math.atan(Math.tan(state.fov*Math.PI/360)*540/960);let ang=Math.atan2(dir[1],dir[0]);
+ const cone=1.3;ctx.beginPath();ctx.moveTo(...pos);for(let i=0;i<=30;i++){const a=ang-hfov/2+hfov*i/30;const pt=map(state.x+cone*Math.cos(a),state.y+cone*Math.sin(a));ctx.lineTo(...pt);}ctx.closePath();ctx.fillStyle='rgba(237,181,109,0.12)';ctx.fill();ctx.strokeStyle='rgba(237,181,109,.50)';ctx.lineWidth=1;ctx.stroke();
+ ctx.beginPath();ctx.arc(...pos,7,0,2*Math.PI);ctx.fillStyle='#ffc47d';ctx.fill();ctx.strokeStyle='#9f6632';ctx.lineWidth=2;ctx.stroke();
+ let p2=map(state.x+dir[0]*.7,state.y+dir[1]*.7);ctx.strokeStyle='#ffc47d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(...pos);ctx.lineTo(...p2);ctx.stroke();
+ ctx.fillStyle='#99adb7';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('房間深處 / WINDOW',W/2,18);ctx.fillText('走廊 / HALLWAY',W/2,420);
+ ctx.fillStyle='#e3af73';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText('固定半開門',91,326);
+ return {map,scale,cx,y0};}
+function refresh(){for(const k of ['x','y','z','yaw','pitch','fov']){$(k).value=String(state[k]);$('v'+k).textContent=Number(state[k]).toFixed(k==='fov'?0:2)+(k==='yaw'||k==='pitch'||k==='fov'?'°':'');}render3d();renderPlan();try{localStorage.setItem(STORAGE_KEY,JSON.stringify({x:state.x,y:state.y,z:state.z,yaw:state.yaw,pitch:state.pitch,fov:state.fov}));}catch(e){/* no storage */}}
+for(const k of ['x','y','z','yaw','pitch','fov']){$(k).addEventListener('input',()=>{state[k]=+$(k).value;refresh();});}
+function msg(s){$('msg').textContent=s;}
+let rotatePointer=null;
+view.addEventListener('pointerdown',ev=>{rotatePointer={id:ev.pointerId,x:ev.clientX,y:ev.clientY,yaw:state.yaw,pitch:state.pitch};view.setPointerCapture(ev.pointerId);});
+view.addEventListener('pointermove',ev=>{if(!rotatePointer||rotatePointer.id!==ev.pointerId)return;state.yaw=clamp(rotatePointer.yaw+(ev.clientX-rotatePointer.x)*.20,-78,78);state.pitch=clamp(rotatePointer.pitch-(ev.clientY-rotatePointer.y)*.15,-35,30);refresh();});
+view.addEventListener('pointerup',()=>{rotatePointer=null});view.addEventListener('pointercancel',()=>{rotatePointer=null});
+view.addEventListener('wheel',ev=>{ev.preventDefault();state.fov=clamp(Math.round(state.fov+Math.sign(ev.deltaY)*2),40,102);refresh();},{passive:false});
+let dragPlan=false;
+function planMouse(ev){const b=pcanvas.getBoundingClientRect(),px=(ev.clientX-b.left)*pcanvas.width/b.width,py=(ev.clientY-b.top)*pcanvas.height/b.height;return [clamp((px-171)/43,-2.5,2.4),clamp((323-py)/43,-2.9,-.20)];}
+pcanvas.addEventListener('pointerdown',ev=>{dragPlan=true;pcanvas.setPointerCapture(ev.pointerId);const [x,y]=planMouse(ev);state.x=x;state.y=y;refresh();});
+pcanvas.addEventListener('pointermove',ev=>{if(!dragPlan)return;const [x,y]=planMouse(ev);state.x=x;state.y=y;refresh();});
+pcanvas.addEventListener('pointerup',()=>dragPlan=false);pcanvas.addEventListener('pointercancel',()=>dragPlan=false);
+$('reset').onclick=()=>{Object.assign(state,START);refresh();msg('已恢復最初的灰模攝影機設定');};
+$('load').onclick=()=>$('importfile').click();
+$('importfile').addEventListener('change',async ev=>{try{const f=ev.target.files[0];if(!f)return;const cfg=JSON.parse(await f.text()), c=cfg.camera;
+ if(!c||!Array.isArray(c.position)||c.position.length!==3)throw Error('缺少 camera.position');
+ const v=c.target?.map((x,i)=>x-c.position[i]);const xy=v?Math.hypot(v[0],v[1]):1;
+ state.x=clamp(+c.position[0],-2.5,2.4);state.y=clamp(+c.position[1],-2.9,-.20);state.z=clamp(+c.position[2],1.00,2.05);
+ state.yaw=clamp(Number.isFinite(cfg.orientation?.yaw_deg)?+cfg.orientation.yaw_deg:Math.atan2(v?.[0]||0,v?.[1]||1)*180/Math.PI,-78,78);
+ state.pitch=clamp(Number.isFinite(cfg.orientation?.pitch_deg)?+cfg.orientation.pitch_deg:Math.atan2(v?.[2]||0,xy)*180/Math.PI,-35,30);
+ state.fov=clamp(+c.vertical_fov_deg||75,40,102);refresh();msg('已載入鏡位：'+f.name);
+ }catch(e){msg('無法載入參數：'+e.message)}finally{ev.target.value='';}});
+
+function output(){let d=direction();return {type:'SON_ROOM_S01_CAMERA_BLOCKING_PREVIEW_R1',status:'REVIEW_CANDIDATE_ONLY',units:'proxy units, not measured',camera:{position:[state.x,state.y,state.z],target:[state.x+d[0]*3.5,state.y+d[1]*3.5,state.z+d[2]*3.5],view_up:[0,0,1],vertical_fov_deg:state.fov,resolution:[540,960]},orientation:{yaw_deg:state.yaw,pitch_deg:state.pitch},door:{...fixedDoor,locked:true},scene:'fixed geometry from S01_CAMERA_BLOCKING_TRIAL_R1; 46 meshes',notes:'Original photograph does not prove room dimensions or true door swing. Camera only changed.'};}
+function download(data,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+$('save').onclick=()=>{download(JSON.stringify(output(),null,2),'SON_ROOM_S01_CAMERA_MANUAL_R1.json','application/json');msg('JSON 已匯出；回傳檔案給 ChatGPT 即可重算');};
+$('snap').onclick=()=>{render3d();view.toBlob(b=>{if(!b){msg('無法匯出截圖');return;}let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='SON_ROOM_S01_CAMERA_MANUAL_PREVIEW.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);msg('已匯出 540×960 PNG');},'image/png');};
+$('copy').onclick=async()=>{const str=JSON.stringify(output(),null,2);try{await navigator.clipboard.writeText(str);msg('已複製攝影機 JSON');}catch(e){download(str,'SON_ROOM_S01_CAMERA_MANUAL_R1.json','application/json');msg('瀏覽器不允許複製，已改匯出 JSON');}};
+if(!gl){msg('已自動切換到 Canvas 軟體透視預覽，無需 WebGL。');}
+refresh();
+</script>
+</body>
+</html>
